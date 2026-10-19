@@ -103,10 +103,18 @@ function verifyAdminApiKey(req, res, next) {
 
 // ==========================================
 // 5. FREE NOTIFICATION DISPATCHER (TELEGRAM)
+// Connected Bot: https://t.me/justsearchweb_bot (@justsearchweb_bot)
 // ==========================================
+const TELEGRAM_CONFIG = {
+  botToken: process.env.TELEGRAM_BOT_TOKEN || '8813932843:AAEEl0FbdmsaTa8WlJh0O4_TzuqLR8GqNL4',
+  chatId: process.env.TELEGRAM_CHAT_ID || '8664823234',
+  botUrl: process.env.TELEGRAM_BOT_URL || 'https://t.me/justsearchweb_bot',
+  botUsername: 'justsearchweb_bot'
+};
+
 async function sendTelegramAlert(leadData) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const botToken = TELEGRAM_CONFIG.botToken;
+  const chatId = TELEGRAM_CONFIG.chatId;
 
   if (!botToken || !chatId) {
     console.log('[Notification] Telegram Bot credentials not configured. Skipping alert.');
@@ -149,6 +157,11 @@ async function sendTelegramAlert(leadData) {
 // Health Check Endpoint (For monitoring & keeping free cloud servers awake)
 app.get('/health', (req, res) => {
   res.status(200).json({
+    telegram: {
+      bot: '@justsearchweb_bot',
+      url: 'https://t.me/justsearchweb_bot',
+      configured: Boolean(TELEGRAM_CONFIG.botToken && TELEGRAM_CONFIG.chatId)
+    },
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime()) + 's'
@@ -158,6 +171,11 @@ app.get('/health', (req, res) => {
 // Root route
 app.get('/', (req, res) => {
   res.status(200).json({
+    telegram: {
+      bot: '@justsearchweb_bot',
+      url: 'https://t.me/justsearchweb_bot',
+      configured: Boolean(TELEGRAM_CONFIG.botToken && TELEGRAM_CONFIG.chatId)
+    },
     service: 'Just Search Web Design LLC - Secure Agency API',
     version: '1.0.0',
     documentation: '/api/v1/health'
@@ -180,7 +198,12 @@ app.post('/api/v1/contact', contactLimiter, async (req, res) => {
     // A. HONEYPOT CHECK: If invisible bot field has content, silently discard!
     if (_hp_website && _hp_website.trim().length > 0) {
       console.warn('[Security Warning] Bot honeypot triggered. Request dropped silently.');
-      return res.status(200).json({ success: true, message: 'Inquiry received successfully.' });
+      return res.status(200).json({
+    telegram: {
+      bot: '@justsearchweb_bot',
+      url: 'https://t.me/justsearchweb_bot',
+      configured: Boolean(TELEGRAM_CONFIG.botToken && TELEGRAM_CONFIG.chatId)
+    }, success: true, message: 'Inquiry received successfully.' });
     }
 
     // B. INPUT VALIDATION & SANITIZATION
@@ -234,6 +257,11 @@ app.post('/api/v1/contact', contactLimiter, async (req, res) => {
 // Admin Endpoint: View recent leads (Protected by API Key)
 app.get('/api/v1/leads', verifyAdminApiKey, (req, res) => {
   res.status(200).json({
+    telegram: {
+      bot: '@justsearchweb_bot',
+      url: 'https://t.me/justsearchweb_bot',
+      configured: Boolean(TELEGRAM_CONFIG.botToken && TELEGRAM_CONFIG.chatId)
+    },
     success: true,
     total: leadsStore.length,
     leads: leadsStore
