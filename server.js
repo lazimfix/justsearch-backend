@@ -28,13 +28,26 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()) 
   : ['*'];
 
+// Whitelisted agency and production domains
+const agencyOrigins = [
+  'https://lazimfix.github.io',
+  'https://justsearchweb.blogspot.com',
+  'https://qaiumportfolio.blogspot.com'
+];
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, server-to-server) or in whitelist
-    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin, or wildcard, or in whitelist, or agency domains
+    if (
+      !origin || 
+      allowedOrigins.includes('*') || 
+      allowedOrigins.includes(origin) ||
+      agencyOrigins.includes(origin) ||
+      (origin && (origin.endsWith('.github.io') || origin.endsWith('.blogspot.com')))
+    ) {
       return callback(null, true);
     }
-    const err = new Error('CORS Policy: Access denied for this origin.');
+    const err = new Error('CORS Policy: Access denied for this origin: ' + origin);
     err.status = 403;
     return callback(err);
   },
